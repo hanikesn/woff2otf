@@ -21,10 +21,7 @@ import sys
 import zlib
 
 
-def convert(infilename, outfilename):
-    infile  = open(infilename , mode='rb')
-    outfile = open(outfilename, mode='wb')
-
+def convert_streams(infile, outfile):
     WOFFHeader = {'signature': struct.unpack(">I", infile.read(4))[0],
                   'flavor': struct.unpack(">I", infile.read(4))[0],
                   'length': struct.unpack(">I", infile.read(4))[0],
@@ -84,6 +81,12 @@ def convert(infilename, outfilename):
         if (offset % 4) != 0:
             padding = 4 - (offset % 4)
         outfile.write(bytearray(padding));
+
+
+def convert(infilename, outfilename):
+    with open(infilename , mode='rb') as infile:
+        with open(outfilename, mode='wb') as outfile:
+            convert_streams(infile, outfile)
 
 
 def main(argv):
