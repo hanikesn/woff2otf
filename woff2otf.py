@@ -90,9 +90,19 @@ def convert(infilename, outfilename):
 
 
 def main(argv):
-    infilename  = argv[1]
-    outfilename = argv[2]
-    convert(infilename, outfilename)
+    if len(argv) == 1 or len(argv) > 3:
+        print('I convert *.woff files to *.otf files. (one at a time :)\n'
+              'Usage: woff2otf.py web_font.woff [converted_filename.otf]\n'
+              'If the target file name is ommited, it will be guessed. Have fun!\n')
+        return
+
+    source_file_name  = argv[1]
+    if len(argv) == 3:
+        target_file_name = argv[2]
+    else:
+        target_file_name = source_file_name.split('.')[0] + '.otf'
+
+    convert(source_file_name, target_file_name)
     return 0
 
 
