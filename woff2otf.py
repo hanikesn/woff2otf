@@ -38,7 +38,7 @@ def convert_streams(infile, outfile):
 
     outfile.write(struct.pack(">I", WOFFHeader['flavor']));
     outfile.write(struct.pack(">H", WOFFHeader['numTables']));
-    maximum = list(filter(lambda x: x[1] < WOFFHeader['numTables'], [(n, n**2) for n in range(64)]))[-1]; 
+    maximum = list(filter(lambda x: x[1] <= WOFFHeader['numTables'], [(n, 2**n) for n in range(64)]))[-1]; 
     searchRange = maximum[1] * 16
     outfile.write(struct.pack(">H", searchRange));
     entrySelector = maximum[0]
