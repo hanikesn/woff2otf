@@ -1,11 +1,13 @@
 # woff2otf
 
-This is a small utility to convert WOFF files to the OTF font format. It uses Python 3, so you need to have it installed in order to run it.
+This is a small utility to convert WOFF files to the OTF font format. It uses Javascript, so you can run it in the browser. It depends on the [port of zlib to javascript](https://github.com/nodeca/pako), you need to include [this file](https://github.com/nodeca/pako/blob/master/dist/pako_inflate.js) in your page. Or just [go to this page to convert WOFF to OTF online](https://arty.name/woff2otf/).
 
 ## Usage
-To run the script, simply invoke it from the command line:
+
 ```
-./woff2otf.py font.woff font.otf
+convert_streams(<ArrayBuffer>)  // returns <ArrayBuffer> containing OTF font
 ```
 
-The first parameter is the source file (the WOFF) font, and the second parameter is the output file (in OTF format).
+## Credits
+
+Big thanks to Steffen Hanikel for his Python implementation of this script, which I later converted to Javascript.
