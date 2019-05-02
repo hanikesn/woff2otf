@@ -40,35 +40,44 @@ def extract_webfont(URL):
     # Extract stylesheet CSS link from the web\
     if URL.find("/", 9) != -1:
         base_URL = URL[:URL.find("/", 9)]
-    base_URL = URL
+    else:
+        base_URL = URL
     
     response = requests.get(URL)
     soup = BeautifulSoup(response.text, "html5lib")
     style_links = soup.find_all("link", {"rel": "stylesheet"})
     
-    for href in style_links:
-        if "font" in href["href"]:
-            style_link = href
+    #href_fonts = []
+    #for href in style_links:
+    #    if "font" in href["href"]:
+    #        href_fonts.append(href)
 
     
     # Get all web font(.woff) links from the CSS
     try:
-        if style_link["href"].startswith("http"):
-            style_URL = style_link["href"]
-        elif style_link["href"].startswith("//"):
-            style_URL = "https:" + style_link["href"]
-        else:
-            style_URL = os.path.join(base_URL.strip("/"), style_link["href"].strip("/"))
-        response = requests.get(style_URL)
+        formatted_href = []
+        for style_link in style_links:
+            if style_link["href"].startswith("http"):
+                style_URL = style_link["href"]
+            elif style_link["href"].startswith("//"):
+                style_URL = "https:" + style_link["href"]
+            else:
+                style_URL = os.path.join(base_URL.strip("/"), style_link["href"].strip("/"))
+            formatted_href.append(style_URL)
+            
     except (UnboundLocalError, NameError):
         raise NameError("no downloadable fonts found")
-    style_URL
 
+    # Remove CSS links that does not contain font-face info
+    href_with_font = []
+    for href in formatted_href:
+        response = requests.get(href).text
+        if response.find("font-face") != -1:
+            href_with_font.append(href)
 
     # Parse font CSS into Python dictionary
     def get_font(name_link):
         links = re.findall(r'url\((.+?)\)format', name_link)
-        #print(links)
 
         for idx, link in enumerate(links):
             if link.endswith(".ttf"):
@@ -93,13 +102,18 @@ def extract_webfont(URL):
         else:
             raise ValueError("no downloadable fonts found")
 
-    response_txt = response.text.replace("\n", "").replace(" ", "").replace("\t", "")
-    font_family_list = re.findall(r"@font-face{(.*?)}", response_txt)
-    font_family_list
+            
+    font_dict = {}
+    for style_URL in href_with_font:
+        response = requests.get(style_URL)
+        response_txt = response.text.replace("\n", "").replace(" ", "").replace("\t", "")
+        font_family_list = re.findall(r"@font-face{(.*?)}", response_txt)
+        
+        try:
+            font_dict.update({get_font(name_link)[0]: get_font(name_link)[1] for name_link in font_family_list})
+        except ValueError:
+            continue
 
-    font_dict = {get_font(name_link)[0]: get_font(name_link)[1] for name_link in font_family_list}
-
-    font_dict
     if not font_dict:
         raise ValueError("no downloadable fonts found")
 
@@ -109,43 +123,59 @@ def extract_webfont(URL):
         prompt += f"  [{idx}] {name}\n"
 
     # comma-separated input. e.g. 1,2,3
+    # or * (all available fonts)
+    ## Download selected fonts!
+    def download_font_at(i):
+        font_name = list(font_dict.keys())[i]
+        if list(font_dict.values())[i].startswith("http"):
+            download_URL = list(font_dict.values())[i]
+        elif list(font_dict.values())[i].startswith("//"):
+            download_URL = "https:" + list(font_dict.values())[i]
+        else:
+            download_URL = os.path.join(base_URL.strip("/"), list(font_dict.values())[i].strip("/"))
+        #print(download_URL)
+        
+        # write font from the web
+        if download_URL.lower().endswith(".woff"):
+            response = requests.get(download_URL)
+            if response.status_code == 404:
+                print( "Failed to download: download page not found (404)")
+                return
+            woff_content = response.content
+            woff_fname = font_name
+            otf_fname = os.path.splitext(font_name)[0] + ".otf"
+            with open(woff_fname, "wb") as wb:
+                wb.write(woff_content)
+
+            # convert woff to otf and remove woff, if needed
+            woff_fhand = open(woff_fname, "rb")
+            otf_fhand = open(otf_fname, "wb")
+            convert_streams(woff_fhand, otf_fhand)
+            woff_fhand.close()
+            otf_fhand.close()
+
+            os.remove(woff_fname)
+            print(f" Font saved: ./{otf_fname}")
+        elif download_URL.lower().endswith(".ttf"):
+            response = requests.get(download_URL)
+            if response.status_code == 404:
+                print( f"Failed: {font_name} - download page not found (404)")
+                return
+            ttf_content = response.content
+            ttf_fname = font_name
+            with open(ttf_fname, "wb") as wb:
+                wb.write(ttf_content)
+            print(f" Font saved: ./{ttf_fname}")
+        else:
+            raise ValueError(f'unknown type: {download_URL.split(".")[-1]}')
+                                 
     selected = input(prompt)
     if selected.replace(",", "").replace(" ", "").isnumeric():
-        for i in map(int, selected.replace(" ", "").split(",")):
-            font_name = list(font_dict.keys())[i]
-            if list(font_dict.values())[i].startswith("http"):
-                download_URL = list(font_dict.values())[i]
-            elif list(font_dict.values())[i].startswith("//"):
-                download_URL = "https:" + list(font_dict.values())[i]
-            else:
-                download_URL = os.path.join(base_URL.strip("/"), list(font_dict.values())[i].strip("/"))
-
-            # write font from the web
-            if download_URL.lower().endswith(".woff"):
-                woff_content = requests.get(download_URL).content
-                woff_fname = font_name
-                otf_fname = font_name.split(".")[-2] + ".otf"
-                with open(woff_fname, "wb") as wb:
-                    wb.write(woff_content)
-
-                # convert woff to otf and remove woff, if needed
-                woff_fhand = open(woff_fname, "rb")
-                otf_fhand = open(otf_fname, "wb")
-                convert_streams(woff_fhand, otf_fhand)
-                woff_fhand.close()
-                otf_fhand.close()
-
-                os.remove(woff_fname)
-                print(f" Font saved: ./{otf_fname}")
-            elif download_URL.lower().endswith(".ttf"):
-                ttf_content = requests.get(download_URL).content
-                ttf_fname = font_name
-                with open(ttf_fname, "wb") as wb:
-                    wb.write(ttf_content)
-                print(f" Font saved: ./{ttf_fname}")
-            else:
-                raise ValueError(f'unknown type: {download_URL.split(".")[-1]}')
-
+        for idx in map(int, selected.replace(" ", "").split(",")):
+            download_font_at(idx)
+    elif selected.strip() == "*":
+        for idx in range(len(font_dict)):
+            download_font_at(idx)
     else:
         raise ValueError("response should be a number")
 
