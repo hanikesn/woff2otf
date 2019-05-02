@@ -1,4 +1,22 @@
 #!/usr/bin/env python3
+#
+# Copyright 2019, Sihyung Park (https://github.com/naturale0)
+# 
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+# A tool to convert a WOFF back to a TTF/OTF font file, in pure Python
+
 from bs4 import BeautifulSoup
 from woff2otf import convert_streams
 import requests
@@ -20,12 +38,14 @@ def print_warning():
 
 def extract_webfont(URL):
     # Extract stylesheet CSS link from the web\
-    base_URL = URL[:URL.find("/", 9)]
-
+    if URL.find("/", 9) != -1:
+        base_URL = URL[:URL.find("/", 9)]
+    base_URL = URL
+    
     response = requests.get(URL)
     soup = BeautifulSoup(response.text, "html5lib")
     style_links = soup.find_all("link", {"rel": "stylesheet"})
-
+    
     for href in style_links:
         if "font" in href["href"]:
             style_link = href
