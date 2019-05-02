@@ -20,7 +20,7 @@ To run the script. type in the following command in terminal.
 
 make sure the URLs have 'http' or 'https' header in front of it, and are wrapped with quotation marks(`'`).
 
-Then, the script will extract all the fonts it can extract from the URL and prompt them as follows.
+Then, the script will list all the fonts it can extract from the URL and prompt them as follows.
 
 ```
 ============================= WARNING =============================
