@@ -38,6 +38,9 @@ def print_warning():
 
 def extract_webfont(URL):
     # Extract stylesheet CSS link from the web\
+    global base_URL
+    global font_dict
+    
     if URL.find("/", 9) != -1:
         base_URL = URL[:URL.find("/", 9)]
     else:
@@ -76,33 +79,6 @@ def extract_webfont(URL):
             href_with_font.append(href)
 
     # Parse font CSS into Python dictionary
-    def get_font(name_link):
-        links = re.findall(r'url\((.+?)\)format', name_link)
-
-        for idx, link in enumerate(links):
-            if link.endswith(".ttf"):
-                is_ttf = True
-                idx_ttf = idx
-                break
-        else:
-            is_ttf = False
-
-        for idx, link in enumerate(links):
-            if link.endswith(".woff"):
-                is_woff = True
-                idx_woff = idx
-                break
-        else:
-            is_woff = False
-
-        if is_ttf:
-            return os.path.basename(links[idx_ttf]), links[idx_ttf]
-        elif is_woff:
-            return os.path.basename(links[idx_woff]), links[idx_woff]
-        else:
-            raise ValueError("no downloadable fonts found")
-
-            
     font_dict = {}
     for style_URL in href_with_font:
         response = requests.get(style_URL)
@@ -124,51 +100,7 @@ def extract_webfont(URL):
 
     # comma-separated input. e.g. 1,2,3
     # or * (all available fonts)
-    ## Download selected fonts!
-    def download_font_at(i):
-        font_name = list(font_dict.keys())[i]
-        if list(font_dict.values())[i].startswith("http"):
-            download_URL = list(font_dict.values())[i]
-        elif list(font_dict.values())[i].startswith("//"):
-            download_URL = "https:" + list(font_dict.values())[i]
-        else:
-            download_URL = os.path.join(base_URL.strip("/"), list(font_dict.values())[i].strip("/"))
-        #print(download_URL)
-        
-        # write font from the web
-        if download_URL.lower().endswith(".woff"):
-            response = requests.get(download_URL)
-            if response.status_code == 404:
-                print( "Failed to download: download page not found (404)")
-                return
-            woff_content = response.content
-            woff_fname = font_name
-            otf_fname = os.path.splitext(font_name)[0] + ".otf"
-            with open(woff_fname, "wb") as wb:
-                wb.write(woff_content)
-
-            # convert woff to otf and remove woff, if needed
-            woff_fhand = open(woff_fname, "rb")
-            otf_fhand = open(otf_fname, "wb")
-            convert_streams(woff_fhand, otf_fhand)
-            woff_fhand.close()
-            otf_fhand.close()
-
-            os.remove(woff_fname)
-            print(f" Font saved: ./{otf_fname}")
-        elif download_URL.lower().endswith(".ttf"):
-            response = requests.get(download_URL)
-            if response.status_code == 404:
-                print( f"Failed: {font_name} - download page not found (404)")
-                return
-            ttf_content = response.content
-            ttf_fname = font_name
-            with open(ttf_fname, "wb") as wb:
-                wb.write(ttf_content)
-            print(f" Font saved: ./{ttf_fname}")
-        else:
-            raise ValueError(f'unknown type: {download_URL.split(".")[-1]}')
-                                 
+    ## Download selected fonts!                             
     selected = input(prompt)
     if selected.replace(",", "").replace(" ", "").isnumeric():
         for idx in map(int, selected.replace(" ", "").split(",")):
@@ -178,6 +110,78 @@ def extract_webfont(URL):
             download_font_at(idx)
     else:
         raise ValueError("response should be a number")
+
+
+def get_font(name_link):
+    links = re.findall(r'url\((.+?)\)format', name_link)
+
+    for idx, link in enumerate(links):
+        if link.endswith(".ttf"):
+            is_ttf = True
+            idx_ttf = idx
+            break
+    else:
+        is_ttf = False
+
+    for idx, link in enumerate(links):
+        if link.endswith(".woff"):
+            is_woff = True
+            idx_woff = idx
+            break
+    else:
+        is_woff = False
+
+    if is_ttf:
+        return os.path.basename(links[idx_ttf]), links[idx_ttf]
+    elif is_woff:
+        return os.path.basename(links[idx_woff]), links[idx_woff]
+    else:
+        raise ValueError("no downloadable fonts found")
+
+
+def download_font_at(i):
+    font_name = list(font_dict.keys())[i]
+    if list(font_dict.values())[i].startswith("http"):
+        download_URL = list(font_dict.values())[i]
+    elif list(font_dict.values())[i].startswith("//"):
+        download_URL = "https:" + list(font_dict.values())[i]
+    else:
+        download_URL = os.path.join(base_URL.strip("/"), list(font_dict.values())[i].strip("/"))
+    #print(download_URL)
+
+    # write font from the web
+    if download_URL.lower().endswith(".woff"):
+        response = requests.get(download_URL)
+        if response.status_code == 404:
+            print( "Failed to download: download page not found (404)")
+            return
+        woff_content = response.content
+        woff_fname = font_name
+        otf_fname = os.path.splitext(font_name)[0] + ".otf"
+        with open(woff_fname, "wb") as wb:
+            wb.write(woff_content)
+
+        # convert woff to otf and remove woff, if needed
+        woff_fhand = open(woff_fname, "rb")
+        otf_fhand = open(otf_fname, "wb")
+        convert_streams(woff_fhand, otf_fhand)
+        woff_fhand.close()
+        otf_fhand.close()
+
+        os.remove(woff_fname)
+        print(f" Font saved: ./{otf_fname}")
+    elif download_URL.lower().endswith(".ttf"):
+        response = requests.get(download_URL)
+        if response.status_code == 404:
+            print( f"Failed: {font_name} - download page not found (404)")
+            return
+        ttf_content = response.content
+        ttf_fname = font_name
+        with open(ttf_fname, "wb") as wb:
+            wb.write(ttf_content)
+        print(f" Font saved: ./{ttf_fname}")
+    else:
+        raise ValueError(f'unknown type: {download_URL.split(".")[-1]}')
 
 
 def main(argv):
