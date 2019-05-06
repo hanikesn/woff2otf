@@ -15,7 +15,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-# A tool to convert a WOFF back to a TTF/OTF font file, in pure Python
+# A tool to extract and download font from input URLs
 
 from bs4 import BeautifulSoup
 from woff2otf import convert_streams
