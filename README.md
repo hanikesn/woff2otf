@@ -18,9 +18,9 @@ To run the script. type in the following command in terminal.
 ./extract_webfont.py 'https://sample1.com'
 ```
 
-make sure the URLs have 'http' or 'https' header in front of it, and are wrapped with quotation marks(`'`).
+make sure the URLs have 'http' or 'https' header in front of them, and are wrapped with quotation marks(`'`).
 
-Then, the script will list all the fonts it can extract from the URL and prompt them as follows.
+Then, the script will list all of the fonts it can extract from the URL and prompt them as follows.
 
 ```
 ============================= WARNING =============================
