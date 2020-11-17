@@ -93,7 +93,7 @@ def main(argv):
     if len(argv) == 1 or len(argv) > 3:
         print('I convert *.woff files to *.otf files. (one at a time :)\n'
               'Usage: woff2otf.py web_font.woff [converted_filename.otf]\n'
-              'If the target file name is ommited, it will be guessed. Have fun!\n')
+              'If the target file name is omitted, it will be guessed. Have fun!\n')
         return
 
     source_file_name  = argv[1]
