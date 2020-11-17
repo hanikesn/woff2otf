@@ -100,7 +100,7 @@ def main(argv):
     if len(argv) == 3:
         target_file_name = argv[2]
     else:
-        target_file_name = source_file_name.split('.')[0] + '.otf'
+        target_file_name = source_file_name.rsplit('.', 1)[0] + '.otf'
 
     convert(source_file_name, target_file_name)
     return 0
