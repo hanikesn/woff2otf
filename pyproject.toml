@@ -1,0 +1,12 @@
+[project]
+name = "woff2otf"
+version = "0.1.0"
+description = "Convert WOFF files to the OTF files"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    'brotli'
+]
+
+[project.scripts]
+woff2otf = "woff2otf:main"
